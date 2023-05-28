@@ -39,23 +39,26 @@ void usuwanieMacierzy(T** matrix, int n, int m) {
 }
 
 template < typename T >
-void usuwanieWektora(T* _vector, int n) {
+void usuwanieWektora(T* _vector) {
     delete[] _vector;
 }
 
-template < typename T >
-void zapiszMacierzDoPliku(T** matrix, int n, int m, std::string& filename) {
-    std::fstream file(filename.c_str(), std::ios::out);
-    if (file.is_open()) {
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < m; ++j) {
-                file << matrix[i][j] << ";";
-            }
-            file << "\n";
-        }
-    }
-    file.close();
-}
+//template < typename T >
+//void zapiszMacierzDoPliku(T** matrix, int n, int m, std::string& filename) {
+//    std::ofstream file(filename, std::ios::out);
+//
+//    if (file.is_open()) {
+//        for (int i = 0; i < n; ++i) {
+//            for (int j = 0; j < m; ++j) {
+//                file << matrix[i][j] << ";";
+//            }
+//            file << "\n";
+//        }
+//    } else {
+//        throw std::runtime_error("Nie można otworzyć pliku do zapisu");
+//    }
+//    file.close();
+//}
 
 template < typename T >
 void zapiszWektorDoPliku(T* _vector, int n, std::string& filename) {
@@ -70,7 +73,7 @@ void zapiszWektorDoPliku(T* _vector, int n, std::string& filename) {
 
 template < typename T >
 void zapiszDwaWektoryDoPliku(T* _vector, T* _second_vector, int n, std::string& filename) {
-    std::fstream file(filename.c_str(), std::ios::out);
+    std::ofstream file(filename.c_str(), std::ios::out);
     if (file.is_open()) {
         for (int i = 0; i < n; ++i) {
             file << _second_vector[i] << ", " << _vector[i] << std::endl;
@@ -194,6 +197,32 @@ double* krokCzasowy(const double dt, const int n) {
         t += dt;
     }
     return kroki;
+}
+
+//fuction to print array
+template < typename T >
+void printArray(T* array, int n) {
+    for (int i = 0; i < n; ++i) {
+        std::cout << array[i] << ", ";
+    }
+    std::cout << std::endl;
+}
+
+//function to save matrix to file
+template < typename T >
+void zapiszMacierzDoPliku(T** matrix, int n, int m, std::string& filename) {
+    std::ofstream file(filename, std::ios::out);
+    if (file.is_open()) {
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                file << matrix[i][j];
+                if (j != m)
+                    file << ",";
+            }
+            file << std::endl;
+        }
+    }
+    file.close();
 }
 
 

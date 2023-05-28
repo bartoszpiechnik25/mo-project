@@ -24,18 +24,18 @@ const double DT_KMB = (0.4 * H * H) / D;
 //delta_t (dt) dla dyskretyzacji pośredniej Cranka-Nicolson
 const double DT_CN = (1.0 * H * H) / D;
 
-void warunekPoczatkowy(double** matrix, const int n, const int m) {
+void warunkiBrzegowe(double** matrix, const int n, const int m) {
     for (int i = 0; i < n; ++i) {
         matrix[i][0] = .0;
         matrix[i][m - 1] = .0;
     }
 }
 
-void warunekBrzegowy(double** matrix, const int m) {
+void warunekPoczatkowy(double** matrix, const int m) {
     double x = X_MIN;
     for (int i = 0; i < m; ++i) {
         matrix[0][i] = ((1.0 / (2.0 * sqrt(M_PI * D * tau))) * exp(-1.0 * (x * x) / (4 * D * tau)));
-        x += h;
+        x += H;
     }
 }
 
