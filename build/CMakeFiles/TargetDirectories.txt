@@ -1,0 +1,3 @@
+C:/Users/barto/Desktop/MO/ProjektLab11/build/CMakeFiles/ProjektLab11.dir
+C:/Users/barto/Desktop/MO/ProjektLab11/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/barto/Desktop/MO/ProjektLab11/build/CMakeFiles/ZERO_CHECK.dir

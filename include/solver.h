@@ -10,9 +10,8 @@
 
 struct wektory {
     double* l, * d, * u, * b, * x;
-    const int size;
 
-    explicit wektory(const int size): size(size) {
+    explicit wektory(const int size) {
         l = alokacjaWektora<double>(size);
         d = alokacjaWektora<double>(size);
         u = alokacjaWektora<double>(size);
@@ -29,17 +28,18 @@ struct wektory {
 };
 
 constexpr double rozwiazanieAnalityczne(const double x, const double t) {
-    return (1.0 / (2.0 * sqrt(M_PI * D * (t + tau)))) * exp(-1.0 * (x * x) / (4 * D * (t + tau)));
+    return 1.0 / (2.0 * sqrt(M_PI * D * (tau + t))) * exp(-(x * x) / (4.0 * D * (tau +t)));
+
 }
 
-double** macierzRozwiazanieAnalityczne(const int n, const int m, const double h, const double dt) {
+double** macierzRozwiazanieAnalityczne(const int n, const int m, const double dt) {
     auto matrix = alokujMacierz<double>(n, m);
     double x = X_MIN;
     double t = T_MIN;
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             matrix[i][j] = rozwiazanieAnalityczne(x, t);
-            x += h;
+            x += H;
         }
         x = X_MIN;
         t += dt;
@@ -59,13 +59,13 @@ void algorytmThomasa(wektory& w, const int m) {
 
     i = m - 2;
     //obliczenie wektora rozwiązań
-    for (; i >= 0; ++i)
+    for (; i >= 0; --i)
         w.x[i] = (w.b[i] - w.u[i] * w.x[i + 1]) / w.d[i];
 }
 
 void algorytmJacobiego(wektory& w, int m) {
     // zamienic ldu na A (alokacja i wypelnianie zerami)
-    double** A = new double* [m];
+    auto A = new double* [m];
     for (int i = 0; i < m; ++i) {
         A[i] = new double[m];
         for (int j = 0; j < m; ++j) A[i][j] = 0.0;
@@ -81,13 +81,15 @@ void algorytmJacobiego(wektory& w, int m) {
     }
     A[m - 1][m - 1] = w.d[m - 1];
     A[m - 1][m - 2] = w.l[m - 1];
+
     // wektor kolejnego przyblizenia
-    double* nastepnyX = alokacjaWektora < double >(m);
-    for (int step = 0; step < ITER; step++) {
-        for (int i = 0; i < m; i++) {
+    auto nastepnyX = alokacjaWektora <double>(m);
+
+    for (int step = 0; step < ITER; ++step) {
+        for (int i = 0; i < m; i++)
             // obliczenie wartosci funkcji dla i wiersza (dla L+U)
             nastepnyX[i] = (w.b[i] - policzWartosc(A, w.x, i, m)) / A[i][i];
-        }
+
         // warunki koncowe
         double wartoscEstymatora = estymator(w.x, nastepnyX, m);
         double wartoscReziduum = residuum(A, nastepnyX, w.b, m);
@@ -101,10 +103,9 @@ void algorytmJacobiego(wektory& w, int m) {
 }
 
 void dyskretyzacjaKMB(double **A, const int n, const int m) {
-    for (int i = 1; i < n; ++i) {
+    for (int i = 1; i < n; ++i)
         for (int j = 1; j < m - 1; ++j)
             A[i][j] = A[i - 1][j] + LAMBDA_KMB * (A[i - 1][j - 1] - (2 * A[i - 1][j]) + A[i - 1][j + 1]);
-    }
 }
 
 void dyskretyzacjaCrankaNicolson(wektory& w, double** A, const int k, const int m) {
@@ -136,10 +137,30 @@ void equationSolver(double** A,
         w.u[m - 1] = 0.0;
         w.b[m - 1] = 0.0;
         solver(w, m);
-        for (int i = 1; i < m - 1; ++i) {
+        for (int i = 1; i < m - 1; ++i)
             A[k][i] = w.x[i];
-        }
     }
+}
+
+double** bladBezwzgledny(double** rozwAnalityczne, double** rozwNumeryczne, double** bledy, const int n, const int m) {
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            bledy[i][j] = std::fabs(rozwNumeryczne[i][j] - rozwAnalityczne[i][j]);
+    return bledy;
+}
+
+double** macierzBledu(double** rozwAnalityczne, double** rozwNumeryczne, const int n, const int m) {
+    double** errors = alokujMacierz <double>(n, m);
+    bladBezwzgledny(rozwAnalityczne, rozwNumeryczne, errors, n, m);
+    return errors;
+}
+
+double* bladMaksymalny(double** bledy, const int n, const int m) {
+    double* max_error = alokacjaWektora <double>(n);
+    for (int i = 0; i < n; ++i) {
+        max_error[i] = vector_max(bledy[i], m);
+    }
+    return max_error;
 }
 
 #endif //PROJEKTLAB11_SOLVER_H

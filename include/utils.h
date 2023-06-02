@@ -29,7 +29,7 @@ T* alokacjaWektora(int n) {
 }
 
 template < typename T >
-void usuwanieMacierzy(T** matrix, int n, int m) {
+void usuwanieMacierzy(T** matrix, int n) {
     if (matrix) {
         for (int i = n - 1; i >= 0; --i) {
             delete[] matrix[i];
@@ -43,25 +43,8 @@ void usuwanieWektora(T* _vector) {
     delete[] _vector;
 }
 
-//template < typename T >
-//void zapiszMacierzDoPliku(T** matrix, int n, int m, std::string& filename) {
-//    std::ofstream file(filename, std::ios::out);
-//
-//    if (file.is_open()) {
-//        for (int i = 0; i < n; ++i) {
-//            for (int j = 0; j < m; ++j) {
-//                file << matrix[i][j] << ";";
-//            }
-//            file << "\n";
-//        }
-//    } else {
-//        throw std::runtime_error("Nie można otworzyć pliku do zapisu");
-//    }
-//    file.close();
-//}
-
 template < typename T >
-void zapiszWektorDoPliku(T* _vector, int n, std::string& filename) {
+void zapiszWektorDoPliku(T* _vector, int n, std::string filename) {
     std::fstream file(filename.c_str(), std::ios::out);
     if (file.is_open()) {
         for (int i = 0; i < n; ++i) {
@@ -72,11 +55,11 @@ void zapiszWektorDoPliku(T* _vector, int n, std::string& filename) {
 }
 
 template < typename T >
-void zapiszDwaWektoryDoPliku(T* _vector, T* _second_vector, int n, std::string& filename) {
+void zapiszDwaWektoryDoPliku(T* _vector, T* _second_vector, int n, std::string filename) {
     std::ofstream file(filename.c_str(), std::ios::out);
     if (file.is_open()) {
         for (int i = 0; i < n; ++i) {
-            file << _second_vector[i] << ", " << _vector[i] << std::endl;
+            file << _second_vector[i] << "," << _vector[i] << std::endl;
         }
     }
     file.close();
@@ -161,17 +144,16 @@ void zapisWynikowDoPliku(double** macierz_wynikow,
                          double const* x,
                          const int n,
                          const int m,
-                         std::string& filename,
-                         const double dt) {
+                         std::string filename) {
     std::fstream file;
     for (int i = 0; i < n; ++i) {
         //krok czasowy
-        if (i == 1 || i == 100 || i == 199) {
+        if (i == 1 || i == (n / 2) || i == (n - 1)) {
             file = std::fstream(filename + std::to_string(i) + ".csv",std::ios::out);
             if (file.is_open()) {
                 for (int j = 0; j < m; ++j) {
                     // krok przestrzenny
-                    file << x[j] << ", " << macierz_wynikow[i][j] << std::endl;
+                    file << x[j] << "," << macierz_wynikow[i][j] << std::endl;
                 }
                 file << "\n";
             }
@@ -197,15 +179,6 @@ double* krokCzasowy(const double dt, const int n) {
         t += dt;
     }
     return kroki;
-}
-
-//fuction to print array
-template < typename T >
-void printArray(T* array, int n) {
-    for (int i = 0; i < n; ++i) {
-        std::cout << array[i] << ", ";
-    }
-    std::cout << std::endl;
 }
 
 //function to save matrix to file
