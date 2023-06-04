@@ -1,5 +1,7 @@
 #include <iostream>
 #include <map>
+#include <mutex>
+#include <future>
 #include "stale.h"
 #include "utils.h"
 #include "solver.h"
@@ -31,6 +33,57 @@ auto macierzKMB(const int n, const int m) {
     return kmb;
 }
 
+void calculateMaxErrors(const int t_kmb, const int t_cn, const string& path) {
+    double h = 0.1;
+
+    ofstream file(path + "/max_errors.csv");
+    file << "log_h,log_error_analytical,log_error_kmb,log_error_cn_thomas,log_error_cn_jacobi" << endl;
+
+    std::mutex file_mutex;
+
+        for(auto i = 0; i < 5; ++i) {
+            cout << "Calculating for h = " << h << endl;
+            const int m = static_cast<int>((X_MAX - X_MIN) / h) + 1;
+
+            auto analityczna_future = std::async(std::launch::async, macierzRozwiazanieAnalityczne, t_cn, m, h);
+            auto analitycznaKMB_future = std::async(std::launch::async, macierzRozwiazanieAnalityczne, t_kmb, m, h);
+            auto kmb_future = std::async(std::launch::async, macierzKMB, t_kmb, m);
+            auto cn_thomas_future = std::async(std::launch::async, macierzCrankNicolsonThomas, t_cn, m);
+            auto cn_jacobi_future = std::async(std::launch::async, macierzCrankNicolsonJacobi, t_cn, m);
+
+            const auto analityczna = analityczna_future.get();
+            const auto analitycznaKMB = analitycznaKMB_future.get();
+            const auto kmb = kmb_future.get();
+            const auto cn_thomas = cn_thomas_future.get();
+            const auto cn_jacobi = cn_jacobi_future.get();
+
+            const auto kmb_error = macierzBledu(analitycznaKMB, kmb, t_kmb, m);
+            const auto cn_thomas_error = macierzBledu(analityczna, cn_thomas, t_cn, m);
+            const auto cn_jacobi_error = macierzBledu(analityczna, cn_jacobi, t_cn, m);
+
+            const auto max_kmb_error = bladMaksymalny(kmb_error, t_kmb, m)[t_kmb - 1];
+            const auto max_cn_thomas_error = bladMaksymalny(cn_thomas_error, t_cn, m)[t_cn - 1];
+            const auto max_cn_jacobi_error = bladMaksymalny(cn_jacobi_error, t_cn, m)[t_cn - 1];
+
+            std::lock_guard<std::mutex> lock(file_mutex);
+            file << log10(h) << ","
+                 << log10(max_kmb_error) << ","
+                 << log10(max_cn_thomas_error) << ","
+                 << log10(max_cn_jacobi_error) << endl;
+
+            usuwanieMacierzy(analityczna, t_cn);
+            usuwanieMacierzy(analitycznaKMB, t_kmb);
+            usuwanieMacierzy(kmb, t_kmb);
+            usuwanieMacierzy(cn_thomas, t_cn);
+            usuwanieMacierzy(cn_jacobi, t_cn);
+            h /= 2;
+
+    }
+
+    file.close();
+}
+
+
 int main() {
 
     const int t_kmb = static_cast<int>((T_MAX - T_MIN) / DT_KMB) + 1 + 1;
@@ -44,6 +97,7 @@ int main() {
          << "Krok czasowy dla KMB: " << DT_KMB << endl
          << "Krok czasowy dla Cranka-Nicolson: " << DT_CN << endl
          << "Krok przestrzenny: " << H << endl;
+    calculateMaxErrors(t_kmb, t_cn, path);
 
     const auto krokiX = krokPrzestrzenny(m);
     const auto krokiT = krokCzasowy(DT_CN, t_cn);
